@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { BuildRoutePath } from "./utils/build-route-path.js";
 import { Database } from "./database.js";
+import { verifyRequiredParams } from "./utils/verify-required-params.js";
 
 const database = new Database();
 
@@ -21,6 +22,15 @@ export const routes = [
         path: BuildRoutePath("/tasks"),
         handler: (req, res) => {
             const { title, description } = req.body;
+
+            const requiredParamsMessage = verifyRequiredParams(res, {
+                title: title,
+                description: description,
+            });
+
+            if(requiredParamsMessage){
+              return res.writeHead(400).end(JSON.stringify({message: requiredParamsMessage}))
+            }
 
             const task = {
                 id: randomUUID(),

@@ -12,8 +12,6 @@ export const routes = [
         handler: (req, res) => {
             const { search } = req.query;
 
-            console.log("search: ", search);
-
             const tasks = database.select(
                 "tasks",
                 search
@@ -75,8 +73,6 @@ export const routes = [
 
             const task = database.selectById("tasks", id);
 
-            console.log("task", task)
-
             if (!task) {
                 return res.writeHead(404).end();
             }
@@ -106,6 +102,20 @@ export const routes = [
         path: BuildRoutePath("/tasks/:id/complete"),
         handler: (req, res) => {
             const { id } = req.params;
+
+            const task = database.selectById("tasks", id);
+
+            if (!task) {
+                return res.writeHead(404).end();
+            }
+
+            const isTaskCompleted = task.completed_at;
+            const completed_at = isTaskCompleted ? null : new Date();
+
+            database.update("tasks", id, {
+                completed_at,
+                updated_at: new Date(),
+            });
 
             return res.writeHead(204).end();
         },

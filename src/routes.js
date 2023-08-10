@@ -11,7 +11,7 @@ export const routes = [
         path: BuildRoutePath("/tasks"),
         handler: (req, res) => {
             const { search } = req.query;
-            
+
             console.log("search: ", search);
 
             const tasks = database.select(
@@ -64,6 +64,28 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params;
             const { title, description } = req.body;
+
+            if (!title || !description) {
+                return res.writeHead(400).end(
+                    JSON.stringify({
+                        message: "title or description are required",
+                    })
+                );
+            }
+
+            const task = database.selectById("tasks", id);
+
+            console.log("task", task)
+
+            if (!task) {
+                return res.writeHead(404).end();
+            }
+
+            database.update("tasks", id, {
+                title,
+                description,
+                updated_at: new Date(),
+            });
 
             return res.writeHead(204).end();
         },

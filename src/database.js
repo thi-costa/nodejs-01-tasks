@@ -15,23 +15,37 @@ export class Database {
     }
 
     #persist() {
-        fs.writeFile(databasePath.pathname, JSON.stringify(this.#database));
+        fs.writeFile(
+            databasePath.pathname,
+            JSON.stringify(this.#database, null, 2)
+        );
     }
 
     select(table, search) {
         let data = this.#database[table] ?? [];
 
-        console.log("db: ", search);
-
         if (search) {
             data = data.filter((row) => {
                 return Object.entries(search).some(([key, value]) => {
-                    return row[key].toLowerCase().includes(value.toLowerCase());
+                    if (!value) return true;
+
+                    return row[key].includes(value);
                 });
             });
         }
 
         return data;
+    }
+    selectById(table, id) {
+        const rowIndex = this.#database[table].findIndex(
+            (row) => row.id === id
+        );
+
+        if (rowIndex > -1) {
+            return this.#database[table][rowIndex];
+        }
+
+        return null;
     }
 
     insert(table, data) {
@@ -62,8 +76,9 @@ export class Database {
         );
 
         if (rowIndex > -1) {
-            this.#database[table][rowIndex] = { id, ...data };
-            this.#persist();
+            const row = this.#database[table][rowIndex];
+            this.#database[table][rowIndex] = { id, ...row, ...data };
+            this.#persist();            
         }
     }
 }

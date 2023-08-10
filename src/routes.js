@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { BuildRoutePath } from "./utils/build-route-path.js";
+import { Database } from "./database.js";
+
+const database = new Database();
 
 export const routes = [
     {
@@ -7,11 +10,10 @@ export const routes = [
         path: BuildRoutePath("/tasks"),
         handler: (req, res) => {
             const { title, description } = req.query;
-            console.log(
-                `Method GET - Title: ${title}; Description: ${description};`
-            );
 
-            return res.end();
+            const tasks = database.select("tasks", null);
+
+            return res.end(JSON.stringify(tasks));
         },
     },
     {
@@ -20,9 +22,16 @@ export const routes = [
         handler: (req, res) => {
             const { title, description } = req.body;
 
-            console.log(
-                `Method POST\nTitle: ${title};\nDescription: ${description};`
-            );
+            const task = {
+                id: randomUUID(),
+                title: title,
+                description: description,
+                completed_at: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+
+            database.insert("tasks", task);
 
             return res.writeHead(201).end();
         },
@@ -34,10 +43,6 @@ export const routes = [
             const { id } = req.params;
             const { title, description } = req.body;
 
-            console.log(
-                `Method PUT\nId: ${id};\nTitle: ${title};\nDescription: ${description};`
-            );
-
             return res.writeHead(204).end();
         },
     },
@@ -47,7 +52,7 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params;
 
-            console.log(`Method DELETE\nId: ${id};`);
+            database.delete("tasks", id);
 
             return res.writeHead(204).end();
         },
@@ -57,10 +62,6 @@ export const routes = [
         path: BuildRoutePath("/tasks/:id/complete"),
         handler: (req, res) => {
             const { id } = req.params;
-
-            console.log(
-                `Method PATCH\nId: ${id};`
-            );
 
             return res.writeHead(204).end();
         },

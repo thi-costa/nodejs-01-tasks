@@ -4,7 +4,15 @@ const databasePath = new URL("../db.json", import.meta.url);
 
 export class Database {
     #database = {};
-    constructor() {}
+    constructor() {
+      fs.readFile(databasePath.pathname, "utf8")
+          .then((data) => {
+              this.#database = JSON.parse(data);
+          })
+          .catch(() => {
+              this.#persist();
+          });
+    }
 
     #persist() {
         fs.writeFile(databasePath.pathname, JSON.stringify(this.#database));

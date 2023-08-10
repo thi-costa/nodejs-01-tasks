@@ -1,17 +1,28 @@
 import { randomUUID } from "node:crypto";
 import { BuildRoutePath } from "./utils/build-route-path.js";
+import { Database } from "./database.js";
+import { verifyRequiredParams } from "./utils/verify-required-params.js";
+
+const database = new Database();
 
 export const routes = [
     {
         method: "GET",
         path: BuildRoutePath("/tasks"),
         handler: (req, res) => {
-            const { title, description } = req.query;
-            console.log(
-                `Method GET - Title: ${title}; Description: ${description};`
+            const { search } = req.query;
+
+            const tasks = database.select(
+                "tasks",
+                search
+                    ? {
+                          title: search,
+                          description: search,
+                      }
+                    : null
             );
 
-            return res.end();
+            return res.end(JSON.stringify(tasks));
         },
     },
     {
@@ -20,9 +31,27 @@ export const routes = [
         handler: (req, res) => {
             const { title, description } = req.body;
 
-            console.log(
-                `Method POST\nTitle: ${title};\nDescription: ${description};`
-            );
+            const requiredParamsMessage = verifyRequiredParams(res, {
+                title: title,
+                description: description,
+            });
+
+            if (requiredParamsMessage) {
+                return res
+                    .writeHead(400)
+                    .end(JSON.stringify({ message: requiredParamsMessage }));
+            }
+
+            const task = {
+                id: randomUUID(),
+                title: title,
+                description: description,
+                completed_at: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+
+            database.insert("tasks", task);
 
             return res.writeHead(201).end();
         },
@@ -34,9 +63,25 @@ export const routes = [
             const { id } = req.params;
             const { title, description } = req.body;
 
-            console.log(
-                `Method PUT\nId: ${id};\nTitle: ${title};\nDescription: ${description};`
-            );
+            if (!title || !description) {
+                return res.writeHead(400).end(
+                    JSON.stringify({
+                        message: "title or description are required",
+                    })
+                );
+            }
+
+            const task = database.selectById("tasks", id);
+
+            if (!task) {
+                return res.writeHead(404).end();
+            }
+
+            database.update("tasks", id, {
+                title,
+                description,
+                updated_at: new Date(),
+            });
 
             return res.writeHead(204).end();
         },
@@ -47,7 +92,7 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params;
 
-            console.log(`Method DELETE\nId: ${id};`);
+            database.delete("tasks", id);
 
             return res.writeHead(204).end();
         },
@@ -58,9 +103,19 @@ export const routes = [
         handler: (req, res) => {
             const { id } = req.params;
 
-            console.log(
-                `Method PATCH\nId: ${id};`
-            );
+            const task = database.selectById("tasks", id);
+
+            if (!task) {
+                return res.writeHead(404).end();
+            }
+
+            const isTaskCompleted = task.completed_at;
+            const completed_at = isTaskCompleted ? null : new Date();
+
+            database.update("tasks", id, {
+                completed_at,
+                updated_at: new Date(),
+            });
 
             return res.writeHead(204).end();
         },

@@ -5,13 +5,13 @@ const databasePath = new URL("../db.json", import.meta.url);
 export class Database {
     #database = {};
     constructor() {
-      fs.readFile(databasePath.pathname, "utf8")
-          .then((data) => {
-              this.#database = JSON.parse(data);
-          })
-          .catch(() => {
-              this.#persist();
-          });
+        fs.readFile(databasePath.pathname, "utf8")
+            .then((data) => {
+                this.#database = JSON.parse(data);
+            })
+            .catch(() => {
+                this.#persist();
+            });
     }
 
     #persist() {
@@ -21,13 +21,15 @@ export class Database {
     select(table, search) {
         let data = this.#database[table] ?? [];
 
-        // if (search) {
-        //     data = data.filter((row) => {
-        //         return Object.entries(search).some(([key, value]) => {
-        //             return row[key].toLowerCase().includes(value.toLowerCase());
-        //         });
-        //     });
-        // }
+        console.log("db: ", search);
+
+        if (search) {
+            data = data.filter((row) => {
+                return Object.entries(search).some(([key, value]) => {
+                    return row[key].toLowerCase().includes(value.toLowerCase());
+                });
+            });
+        }
 
         return data;
     }

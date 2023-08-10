@@ -10,9 +10,19 @@ export const routes = [
         method: "GET",
         path: BuildRoutePath("/tasks"),
         handler: (req, res) => {
-            const { title, description } = req.query;
+            const { search } = req.query;
+            
+            console.log("search: ", search);
 
-            const tasks = database.select("tasks", null);
+            const tasks = database.select(
+                "tasks",
+                search
+                    ? {
+                          title: search,
+                          description: search,
+                      }
+                    : null
+            );
 
             return res.end(JSON.stringify(tasks));
         },
@@ -28,8 +38,10 @@ export const routes = [
                 description: description,
             });
 
-            if(requiredParamsMessage){
-              return res.writeHead(400).end(JSON.stringify({message: requiredParamsMessage}))
+            if (requiredParamsMessage) {
+                return res
+                    .writeHead(400)
+                    .end(JSON.stringify({ message: requiredParamsMessage }));
             }
 
             const task = {
